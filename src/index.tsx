@@ -73,7 +73,7 @@ const Widget: React.FC = () => {
       style={{ fontFamily: "Product sans", backgroundColor: colors.blueDark }}
       className="App"
     >
-      <div style={{ borderWidth: 1, borderColor: "black" }}>
+      {/* <div style={{ borderWidth: 1, borderColor: "black" }}>
         {chats.map(c => {
           return (
             <div style={{ margin: 10 }}>
@@ -83,7 +83,7 @@ const Widget: React.FC = () => {
             </div>
           );
         })}
-      </div>
+      </div> */}
       <Hour>
         <h2 style={{ color: "white" }}>
           DevFest Alicante {time.toDate().getUTCHours()}:
