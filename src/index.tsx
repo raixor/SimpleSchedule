@@ -1,98 +1,71 @@
 import { render } from "react-dom";
-import React, { useEffect, useState } from "react";
-import moment, { Moment } from "moment";
-import Live from "./components/live";
-import PrevNext from "./components/prevNext";
-import colors from "./utils/theme";
-import { IChat } from "./utils/interfaces";
-import styled from "styled-components";
+import React, { useCallback, useEffect, useState } from "react";
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import { isWithinInterval } from "date-fns";
+import SelectDateRange from './components/selectDate';
+import { bookings } from './utils/fakedata';
 
-const Hour = styled.div`
-  display: flex;
-  justify-content: center;
-`;
+const now = new Date();
+const tomorrow = new Date(now);
+const tomorrow4 = new Date(now);
+tomorrow.setDate(tomorrow.getDate() + 1);
+tomorrow4.setDate(tomorrow.getDate() + 4);
+
 const Widget: React.FC = () => {
-  const [time, setTime] = useState(moment());
-  const [chats, setChats] = useState<IChat[]>([]);
-  const [prev, setPrev] = useState<IChat>();
-  const [live, setLive] = useState<IChat>();
-  const [next, setNext] = useState<IChat>();
-  let interval: any;
-  const addZeroBefore = (n: number) => {
-    return (n < 10 ? "0" : "") + n;
-  };
+  // const disabledRanges: any = [];
+  // const disabledRanges = [[now.setDate(now.getDate() + 1), now.setDate(now.getDate() + 4)]];
+  const [disabledRanges, setDisabledRanges] = useState<any>(bookings.map(b => [new Date(b.startDate), new Date(b.endDate)]));
+  // const [disabledRanges, setDisabledRanges] = useState<any>([]);
+
+  const [valueStart, setValueStart] = useState(new Date('Fri Aug 14 2021 00:00:00 GMT+0200 (CEST)'));
+  const [valueEnd, setValueEnd] = useState(tomorrow4);
+
   useEffect(() => {
-    interval = setInterval(
-      () =>
-        setTime(
-          moment()
-            .add(1, "days")
-            .subtract(8, "hours")
-        ),
-      1000
-    );
-    const getChats = async () => {
-      const res = await fetch("https://devfestalicante.com/api/talks/public");
-      setChats(
-        [
-          ...(await res.json()).map(
-            ({ title, start, end, image, speaker, slug }: IChat) => {
-              return {
-                title,
-                start: moment(start),
-                end: moment(end),
-                image: `https://devfestalicante.com${image}`,
-                speaker: {
-                  ...speaker,
-                  avatar: `https://devfestalicante.com${speaker.avatar}`
-                },
-                slug
-              };
-            }
-          )
-        ].sort(
-          (a, b) => a.start.toDate().valueOf() - b.start.toDate().valueOf()
-        )
-      );
-    };
-    getChats();
-  }, []);
+    console.log(valueStart)
+    // setDisabledRanges([[valueStart, valueEnd]])
+  }, [valueStart, valueEnd]);
+
   useEffect(() => {
-    if (time) {
-      chats.map((chat, i) => {
-        if (moment(time).isBetween(chat.start, chat.end)) {
-          setLive(chat);
-          setPrev(chats[i - 1]);
-          setNext(chats[i + 1]);
-        }
-      });
-    }
-  }, [time]);
+    console.log(disabledRanges)
+  }, [disabledRanges]);
+
+  const tileDisabled = useCallback(({ date, view }: any) => {
+      // Add class to tiles in month view only
+      if (view === 'month') {
+        // Check if a date React-Calendar wants to check is within any of the ranges
+        return isWithinRanges(date, disabledRanges);
+      }
+  }, [disabledRanges]);
+
+  function isWithinRange(date: any, range: any) {
+    return isWithinInterval(date, { start: range[0], end: range[1] });
+  }
+  
+  function isWithinRanges(date: any, ranges: any) {
+    return ranges.some((range: any) => isWithinRange(date, range));
+  }
+
+  const [value, setValue] = useState(new Date());
+
+
+  const onChange = (nextValue: any) => {
+    setValue(nextValue);
+  }
+
   return (
-    <div
-      style={{ fontFamily: "Product sans", backgroundColor: colors.blueDark }}
-      className="App"
-    >
-      {/* <div style={{ borderWidth: 1, borderColor: "black" }}>
-        {chats.map(c => {
-          return (
-            <div style={{ margin: 10 }}>
-              <div>title: {c.title}</div>
-              <div>start: {c.start.toDate().toUTCString()}</div>
-              <div>end: {c.end.toDate().toUTCString()}</div>
-            </div>
-          );
-        })}
-      </div> */}
-      <Hour>
-        <h2 style={{ color: "white" }}>
-          DevFest Alicante {time.toDate().getUTCHours()}:
-          {addZeroBefore(time.toDate().getUTCMinutes())}
-        </h2>
-      </Hour>
-      {prev && <PrevNext {...prev} />}
-      {live && <Live {...live} />}
-      {next && <PrevNext {...next} />}
+    <div style={{ width: '100%', height: '100%', backgroundColor: 'black'}}>
+    <div style={{ maxWidth: 500}}>
+
+      <Calendar
+        tileDisabled={tileDisabled}
+        onChange={onChange}
+        value={value}
+      />
+
+<SelectDateRange valueStart={valueStart} valueEnd={valueEnd} setValueStart={setValueStart} setValueEnd={setValueEnd} />
+    </div>
+
     </div>
   );
 };

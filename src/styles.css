@@ -2,3 +2,6 @@
   font-family: "Product Sans", Helvetica, Arial, sans-serif;
   text-align: center;
 }
+body{
+  height: 100%;
+}
